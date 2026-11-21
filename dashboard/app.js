@@ -134,6 +134,7 @@ function renderDashboard() {
   renderReviews(reviews);
   renderJobs(actionableJobs.length ? actionableJobs : state.jobs.slice(0, 5));
   renderSchedule(state.schedule.slice(0, 5), '#next-schedule');
+  renderOverviewLearningInsights(state.learning, state.profile);
   renderNotifications(state.notifications, state.events);
   renderPipeline(state.pipeline);
   renderCalendar(state.schedule);
@@ -240,12 +241,71 @@ function renderNotifications(notifications, events) {
     ? notifications
     : events.map(event => ({ level: event.status === 'error' ? 'error' : 'info', title: label(event.event_type), message: event.data?.error || label(event.status), created_at: event.created_at }));
   const container = $('#notification-list');
+  if (!container) return;
   if (!items.length) {
     container.innerHTML = empty('No activity has been recorded yet.');
     return;
   }
   container.innerHTML = items.slice(0, 7).map(item => `
     <div class="activity ${escapeHTML(item.level || 'info')}"><i></i><p><strong>${escapeHTML(item.title)}</strong><br><span class="meta-line">${escapeHTML(item.message)}</span></p><small>${timeAgo(item.created_at)}</small></div>`).join('');
+}
+
+function renderOverviewLearningInsights(learning = {}, profile = {}) {
+  const container = $('#overview-learning-insights');
+  if (!container) return;
+
+  const approved = (learning.recommendations || []).filter(item => item.status === 'approved');
+  const items = [];
+
+  // Item 1: Channel Persona active
+  if (profile.channel_name) {
+    items.push({
+      badge: 'Identity',
+      title: `${escapeHTML(profile.channel_name)} (3D Bunny Explorer)`,
+      desc: 'Mascot storytelling persona & visual style rules injected into script generation and thumbnails.'
+    });
+  }
+
+  // Item 2: Retention & Hook Pacing
+  items.push({
+    badge: 'Retention',
+    title: 'Adaptive Hook & Scene Pacing',
+    desc: 'Monitoring Scene 0 retention curve; prompt enforces 5-8s cold-open questions with zero generic fluff.'
+  });
+
+  // Item 3: Packaging & High CTR
+  items.push({
+    badge: 'Packaging',
+    title: 'High-CTR Visual Badging',
+    desc: '3D Bunny Explorer with yellow/white contrast badge overlays & 2-4 word intrigue titles.'
+  });
+
+  // Item 4: Subtitles
+  items.push({
+    badge: 'Video Quality',
+    title: 'Burned-In On-Screen Subtitles',
+    desc: 'High-contrast DejaVu Sans bold subtitles burned directly onto 1080p frames.'
+  });
+
+  // Approved recommendations if any
+  for (const rec of approved.slice(0, 2)) {
+    items.push({
+      badge: 'Approved',
+      title: escapeHTML(rec.title),
+      desc: escapeHTML(rec.rationale)
+    });
+  }
+
+  container.innerHTML = items.map(item => `
+    <div class="activity info" style="margin-bottom: 8px;">
+      <i></i>
+      <p>
+        <span class="status pass" style="font-size: 10px; padding: 2px 6px; margin-bottom: 4px; display: inline-block;">${item.badge}</span><br>
+        <strong>${item.title}</strong><br>
+        <span class="meta-line">${item.desc}</span>
+      </p>
+    </div>
+  `).join('');
 }
 
 function currentPipelineFilter() {
@@ -1075,12 +1135,16 @@ async function openContent(productionId) {
             <label><span>Publish time</span><input name="publishTime" type="datetime-local" value="${toLocalInput(publishTime)}"></label>
             <label><span>Privacy</span><select name="privacyStatus"><option value="private" ${data.privacyStatus === 'private' ? 'selected' : ''}>Private</option><option value="unlisted" ${data.privacyStatus === 'unlisted' ? 'selected' : ''}>Unlisted</option><option value="public" ${data.privacyStatus === 'public' ? 'selected' : ''}>Public</option></select></label>
           </div>
-          <div class="settings-row">
-            <label class="toggle"><input name="factChecked" type="checkbox" ${data.factChecked ? 'checked' : ''}><span></span> Facts and claims reviewed</label>
-            <label class="toggle"><input name="rightsConfirmed" type="checkbox" ${data.rightsConfirmed ? 'checked' : ''}><span></span> Media rights confirmed</label>
+          <div class="sticky-compliance-bar">
+            <div class="settings-row" style="margin: 0; display: flex; gap: 16px;">
+              <label class="toggle"><input name="factChecked" type="checkbox" ${data.factChecked ? 'checked' : ''}><span></span> Facts reviewed</label>
+              <label class="toggle"><input name="rightsConfirmed" type="checkbox" ${data.rightsConfirmed ? 'checked' : ''}><span></span> Rights confirmed</label>
+            </div>
+            <div class="form-actions" style="margin: 0; display: flex; gap: 8px; flex-wrap: wrap;">
+              ${item.schedule && !['published', 'uploading', 'uploaded', 'reconciliation_required'].includes(item.schedule.status) ? `<button type="button" class="button secondary" data-reschedule-content="${escapeHTML(item.id)}">Reschedule</button><button type="button" class="button primary" data-publish-now-content="${escapeHTML(item.id)}">Publish now</button><button type="button" class="button danger" data-delete-schedule="${escapeHTML(item.id)}">Delete schedule</button>` : ''}
+              ${canReview ? `<button type="button" class="button primary" data-approve-content="${escapeHTML(item.id)}">Approve & schedule</button><button type="button" class="button secondary" data-save-content="${escapeHTML(item.id)}">Save draft</button><button type="button" class="button danger" data-reject-content="${escapeHTML(item.id)}">Reject</button><button type="button" class="button ghost" data-retry-content="${escapeHTML(item.id)}">Regenerate</button>` : `<a class="button secondary" href="${escapeHTML(item.schedule?.youtube_url || '#')}" target="_blank" rel="noopener">Open on YouTube</a><button type="button" class="button primary" data-republish-content="${escapeHTML(item.id)}">Re-upload to YouTube</button>`}
+            </div>
           </div>
-          ${item.schedule && !['published', 'uploading', 'uploaded', 'reconciliation_required'].includes(item.schedule.status) ? `<div class="form-actions"><button type="button" class="button secondary" data-reschedule-content="${escapeHTML(item.id)}">Reschedule</button><button type="button" class="button primary" data-publish-now-content="${escapeHTML(item.id)}">Publish now</button><button type="button" class="button danger" data-delete-schedule="${escapeHTML(item.id)}">Delete schedule</button></div>` : ''}
-          ${canReview ? `<div class="form-actions"><button type="button" class="button primary" data-approve-content="${escapeHTML(item.id)}">Approve & schedule</button><button type="button" class="button secondary" data-save-content="${escapeHTML(item.id)}">Save draft</button><button type="button" class="button danger" data-reject-content="${escapeHTML(item.id)}">Reject</button><button type="button" class="button ghost" data-retry-content="${escapeHTML(item.id)}">Regenerate</button></div>` : `<a class="button secondary" href="${escapeHTML(item.schedule?.youtube_url || '#')}" target="_blank" rel="noopener">Open on YouTube</a>`}
       </form>`;
     $('#content-review-form').dataset.productionId = item.id;
     $('#content-dialog').showModal();
@@ -1615,6 +1679,16 @@ document.addEventListener('click', async event => {
     if (!confirm('Publish this video to YouTube now using the selected privacy setting?')) return;
     try {
       await mutate(`/api/content/${encodeURIComponent(publishNow.dataset.publishNowContent)}/publish-now`, 'POST', {}, 'Content published.');
+      $('#content-dialog').close();
+    } catch (_error) { /* toast already shown */ }
+    return;
+  }
+
+  const republish = event.target.closest('[data-republish-content]');
+  if (republish) {
+    if (!confirm('Re-upload this repaired video to YouTube now?')) return;
+    try {
+      await mutate(`/api/content/${encodeURIComponent(republish.dataset.republishContent)}/publish-now`, 'POST', {}, 'Video re-uploaded to YouTube.');
       $('#content-dialog').close();
     } catch (_error) { /* toast already shown */ }
     return;

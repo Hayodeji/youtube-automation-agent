@@ -230,29 +230,53 @@ class ContentStrategyAgent {
     try {
       let topic, angle, targetAudience, contentType;
 
-      const aiStrategy = await this.generateContentStrategyWithAI(requestedTopic);
+      const channelProfile = (this.db?.getChannelProfile ? await this.db.getChannelProfile() : null) || {};
+      const isBunnyStudio = channelProfile.channel_name === 'BunnyTales Studio' || String(channelProfile.brand_voice || '').includes('Bunny');
+
+      // Check for mined audience demand requests or backlog ideas
+      let audienceRequested = null;
+      if (!requestedTopic && this.db?.listLearningRecommendations) {
+        const audienceLearnings = await this.db.listLearningRecommendations({ limit: 10 });
+        const demandLearning = audienceLearnings.find(l => l.category === 'audience_demand' && l.proposedChange?.topic);
+        if (demandLearning) {
+          audienceRequested = demandLearning.proposedChange.topic;
+          this.logger.info(`Prioritizing audience-demanded topic from comment mining: ${audienceRequested}`);
+        }
+      }
+      if (!requestedTopic && !audienceRequested && this.db?.getRow) {
+        const backlogIdea = await this.db.getRow(
+          "SELECT topic FROM content_ideas WHERE status IN ('backlog', 'candidate', 'approved') ORDER BY created_at DESC LIMIT 1"
+        );
+        if (backlogIdea?.topic) {
+          audienceRequested = backlogIdea.topic;
+          this.logger.info(`Using priority backlog content idea: ${backlogIdea.topic}`);
+        }
+      }
+
+      const effectiveTopic = requestedTopic || audienceRequested;
+      const aiStrategy = await this.generateContentStrategyWithAI(effectiveTopic);
       if (aiStrategy) {
         await this.db.saveContentStrategy(aiStrategy);
         this.logger.info(`Generated AI strategy for: ${aiStrategy.topic}`);
         return aiStrategy;
       }
 
-      this.logger.info('Using template content strategy generation');
-      if (requestedTopic) {
-        topic = requestedTopic;
-        angle = await this.generateAngle(topic);
+      this.logger.info('Using template content strategy generation with channel persona and audience signals');
+      if (effectiveTopic) {
+        topic = effectiveTopic;
+        angle = await this.generateAngle(topic, isBunnyStudio);
       } else {
-        // Select from trending topics
-        const selectedTopic = this.selectOptimalTopic();
+        // Select from trending topics or channel profile niche
+        const selectedTopic = this.selectOptimalTopic(channelProfile);
         topic = selectedTopic.topic;
-        angle = await this.generateAngle(topic);
+        angle = await this.generateAngle(topic, isBunnyStudio);
       }
 
       // Determine target audience
-      targetAudience = await this.identifyTargetAudience(topic);
+      targetAudience = channelProfile.target_audience || await this.identifyTargetAudience(topic);
 
       // Select content type
-      contentType = this.selectContentType(topic);
+      contentType = channelProfile.default_style ? (channelProfile.default_style.charAt(0).toUpperCase() + channelProfile.default_style.slice(1).toLowerCase()) : this.selectContentType(topic);
 
       // Generate content calendar entry
       const strategy = {
@@ -264,6 +288,9 @@ class ContentStrategyAgent {
         estimatedViews: this.predictViews(topic),
         bestPublishTime: this.calculateBestPublishTime(),
         competitorAnalysis: this.getCompetitorInsights(topic),
+        brandVoice: channelProfile.brand_voice || 'Curious, warm, and adventurous storytelling presented by our 3D cartoon Bunny Explorer',
+        channelGoal: channelProfile.goal || 'Entertain and educate curious minds',
+        channelValueProposition: 'Bring history and science marvels to life with 3D animation',
         createdAt: new Date().toISOString()
       };
 
@@ -505,7 +532,7 @@ Avoid fabricated claims and unsupported numbers.`;
 
     return allowed.has(titleCased) ? titleCased : this.selectContentType(topic);
   }
-  selectOptimalTopic() {
+  selectOptimalTopic(channelProfile = {}) {
     // Use scoring algorithm to select best topic
     const recentTopics = this.getRecentTopics();
 
@@ -524,13 +551,32 @@ Avoid fabricated claims and unsupported numbers.`;
       return readable;
     }
 
-    const fallbackTopics = this.getEvergreenFallbackTopics();
+    const fallbackTopics = this.getEvergreenFallbackTopics(channelProfile);
     const pick = fallbackTopics[Math.floor(Math.random() * fallbackTopics.length)];
-    this.logger.info(`Template mode: no readable trending topic available — using evergreen topic "${pick}"`);
+    this.logger.info(`Template mode: using channel-aligned evergreen topic "${pick}"`);
     return { topic: pick, score: 1 };
   }
 
-  getEvergreenFallbackTopics() {
+  getEvergreenFallbackTopics(channelProfile = {}) {
+    const isBunnyStudio = channelProfile.channel_name === 'BunnyTales Studio' || String(channelProfile.brand_voice || '').includes('Bunny');
+
+    if (isBunnyStudio) {
+      return [
+        'How Did Ancient Builders Move 100-Ton Stone Blocks?',
+        'The Secret Engineering of Ancient Roman Aqueducts',
+        'How the Ancient Lighthouse of Alexandria Worked',
+        'The Antikythera Mechanism: The 2,000-Year-Old Analog Computer',
+        'How Ancient Cities Survived Droughts and Sieges',
+        'The Underground Cities of Derinkuyu: How Millions Lived in Caves',
+        'How Roman Concrete Still Heals Its Own Cracks After 2,000 Years',
+        'The Lost Inventions of Archimedes and Hero of Alexandria',
+        'How Ancient Egyptians Aligned the Great Pyramids to True North',
+        'How the Hanging Gardens of Babylon Were Watered Without Pumps',
+        'The Clockwork Marvels of Ancient China',
+        'How Polynesian Navigators Crossed Oceans Using Only the Stars'
+      ];
+    }
+
     return [
       'Time Management Strategies That Actually Work',
       'Beginner Mistakes to Avoid When Learning a New Skill',
@@ -550,7 +596,20 @@ Avoid fabricated claims and unsupported numbers.`;
     ];
   }
 
-  async generateAngle(topic) {
+  async generateAngle(topic, isBunnyStudio = false) {
+    if (isBunnyStudio) {
+      const bunnyAngles = [
+        `The Ancient Engineering Secret Behind ${topic}`,
+        `How Did Ancient Civilizations Actually Build ${topic}?`,
+        `The Mind-Blowing Science of ${topic} Revealed`,
+        `What Nobody Tells You About ${topic}`,
+        `How ${topic} Defied Gravity and Modern Logic`,
+        `Archaeological Secrets: The True Story of ${topic}`,
+        `Inside ${topic}: An Animated Historical Journey`
+      ];
+      return bunnyAngles[Math.floor(Math.random() * bunnyAngles.length)];
+    }
+
     // Generate unique angle for the topic
     const angles = [
       `The Ultimate Guide to ${topic}`,

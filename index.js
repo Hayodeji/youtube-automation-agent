@@ -758,7 +758,7 @@ class YouTubeAutomationAgent {
     this.app.post('/api/content/:productionId/scenes/rebuild', protect, async (req, res) => {
       try {
         if (!this.scenes) return res.status(503).json({ error: 'Scene repair requires completed setup' });
-        const result = await this.scenes.rebuild(req.params.productionId);
+        const result = await this.scenes.rebuild(req.params.productionId, req.body || {});
         await this.refreshContentReview(req.params.productionId, 'Scene repair rebuilt; final approval is required');
         return res.json({ success: true, result });
       } catch (error) {
@@ -1853,7 +1853,7 @@ class YouTubeAutomationAgent {
     // Loopback by default: mutating routes are open whenever API_KEY is unset,
     // so the dashboard must not be reachable from the network unless asked.
     const HOST = process.env.HOST || '127.0.0.1';
-    this.app.listen(PORT, HOST, () => {
+    const server = this.app.listen(PORT, HOST, () => {
       console.log(chalk.green(`\n✅ YouTube Automation Agent running on ${HOST}:${PORT}`));
       if (!isLoopbackHost(HOST) && !process.env.API_KEY) {
         console.log(chalk.yellow(`⚠️  HOST=${HOST} exposes the dashboard to your network without API_KEY. Set API_KEY in .env to protect generation, approval, and publishing routes.`));
@@ -1870,6 +1870,19 @@ class YouTubeAutomationAgent {
         console.log(chalk.yellow('\n🤖 Automation is active. Approved content will be published on schedule.'));
       }
     });
+
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.error(chalk.red(`\n❌ Port ${PORT} is already in use by another running process.`));
+        console.error(chalk.yellow(`If YouTube Automation Agent is already running, open http://${HOST}:${PORT} in your browser.`));
+        console.error(chalk.yellow(`Or choose another port: PORT=${Number(PORT) + 1} npm start\n`));
+      } else {
+        console.error(chalk.red(`\n❌ Server error: ${err.message}`));
+      }
+      process.exit(1);
+    });
+
+    this.server = server;
   }
 }
 

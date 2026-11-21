@@ -20,7 +20,12 @@ function normalizeTags(input) {
   let totalLength = 0;
 
   for (const value of values) {
-    const tag = cleanText(value).replace(/^#+/, '').replaceAll('"', '').slice(0, 100).trim();
+    const tag = cleanText(value)
+      .replace(/^#+/, '')
+      .replace(/[^\w\s-]/g, '')
+      .replaceAll('"', '')
+      .slice(0, 100)
+      .trim();
     const key = tag.toLowerCase();
     if (!tag || seen.has(key)) continue;
     const nextLength = totalLength + tag.length + (unique.length ? 1 : 0);

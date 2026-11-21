@@ -66,6 +66,10 @@ class ThumbnailDesignerAgent {
   }
 
   async generateConcept(script) {
+    const channelProfile = (this.db?.getChannelProfile ? await this.db.getChannelProfile() : null) || {};
+    const approvedLearnings = (this.db?.listLearningRecommendations ? await this.db.listLearningRecommendations({ status: 'approved' }) : []) || [];
+    const isBunnyTales = channelProfile.channel_name === 'BunnyTales Studio' || String(channelProfile.brand_voice || '').includes('Bunny');
+
     const concepts = {
       tutorial: {
         style: 'clean',
@@ -75,8 +79,8 @@ class ThumbnailDesignerAgent {
       },
       explainer: {
         style: 'informative',
-        elements: ['icons', 'diagrams', 'question marks'],
-        colors: ['purple', 'yellow', 'white'],
+        elements: ['ancient blueprints', 'diagrams', 'mystery question'],
+        colors: ['dark blue', 'gold', 'white'],
         emotion: 'curious'
       },
       list: {
@@ -93,28 +97,41 @@ class ThumbnailDesignerAgent {
       },
       story: {
         style: 'dramatic',
-        elements: ['faces', 'emotion', 'journey path'],
+        elements: ['epic ancient landscape', 'dramatic lighting', 'ancient monuments'],
         colors: ['dark blue', 'gold', 'white'],
         emotion: 'intriguing'
       }
     };
 
     const baseConcept = concepts[script.metadata?.strategy?.contentType?.toLowerCase()] || concepts.explainer;
+    const elements = [...baseConcept.elements];
+    
+    // Inject mascot and channel visual identity
+    if (isBunnyTales) {
+      elements.unshift('Expressive 3D Bunny Explorer with wide curious eyes in explorer gear');
+    }
+
+    // Apply high-CTR learning rules: vibrant contrast, yellow/gold and white on dark backgrounds
+    const hasPackagingLearning = approvedLearnings.some(l => l.category === 'packaging' || (l.proposedChange?.dimension === 'thumbnailStyle'));
+    const primaryColor = hasPackagingLearning || isBunnyTales ? 'dark blue' : baseConcept.colors[0];
+    const secondaryColor = hasPackagingLearning || isBunnyTales ? 'gold' : baseConcept.colors[1];
+    const accentColor = hasPackagingLearning || isBunnyTales ? 'white' : baseConcept.colors[2];
     
     return {
       title: this.formatThumbnailTitle(script.title),
-      style: baseConcept.style,
+      style: isBunnyTales ? '3D animated edutainment adventure' : baseConcept.style,
       primaryText: this.extractPrimaryText(script.title),
-      secondaryText: this.generateSecondaryText(script),
-      elements: baseConcept.elements,
+      secondaryText: this.generateSecondaryText(script, isBunnyTales),
+      elements,
       colors: {
-        primary: baseConcept.colors[0],
-        secondary: baseConcept.colors[1],
-        accent: baseConcept.colors[2]
+        primary: primaryColor,
+        secondary: secondaryColor,
+        accent: accentColor
       },
-      emotion: baseConcept.emotion,
-      composition: this.selectComposition(),
-      effects: this.selectEffects()
+      emotion: isBunnyTales ? 'fascinated & curious' : baseConcept.emotion,
+      composition: isBunnyTales ? 'rule-of-thirds (mascot on one side, massive subject in center)' : this.selectComposition(),
+      effects: this.selectEffects(),
+      channelMascot: isBunnyTales ? 'Bunny Explorer' : null
     };
   }
 
@@ -148,7 +165,12 @@ class ThumbnailDesignerAgent {
     return titleWords.find(word => word.length > 4)?.toUpperCase() || 'WATCH';
   }
 
-  generateSecondaryText(script) {
+  generateSecondaryText(script, isBunnyTales = false) {
+    if (isBunnyTales) {
+      const intrigueTags = ['ANCIENT SECRET', 'DEFIED PHYSICS', 'HOW THEY BUILT IT', '2,000 YEARS AGO', 'TRUE GENIUS'];
+      return intrigueTags[Math.floor(Math.random() * intrigueTags.length)];
+    }
+
     if (script.metadata && script.metadata.strategy) {
       const strategy = script.metadata.strategy;
       
@@ -255,37 +277,49 @@ class ThumbnailDesignerAgent {
     const marker = suffix ? `_${suffix}` : '';
     const outputPath = path.join(__dirname, '..', 'uploads', 'thumbnails', `thumbnail_final${marker}_${Date.now()}.png`);
     
-    // Create text overlay SVG
+    // Create text overlay SVG with high-visibility stroke and pill badge for viral CTR
+    const primaryTextColor = concept.colors.secondary === 'gold' ? '#FFE81F' : '#FFFFFF';
+    const secondaryTextColor = '#FFFFFF';
+
     const textSvg = `
       <svg width="1280" height="720">
         <style>
           .primary { 
-            fill: ${concept.colors.accent === 'white' ? 'white' : 'black'}; 
-            font-size: 120px; 
-            font-weight: bold; 
-            font-family: Arial, sans-serif;
+            fill: ${primaryTextColor}; 
+            font-size: 104px; 
+            font-weight: 900; 
+            font-family: 'DejaVu Sans', Impact, 'Arial Black', sans-serif;
             text-anchor: middle;
+            stroke: #000000;
+            stroke-width: 14px;
+            paint-order: stroke fill;
           }
           .secondary { 
-            fill: ${concept.colors.accent}; 
-            font-size: 60px; 
-            font-weight: bold; 
-            font-family: Arial, sans-serif;
+            fill: ${secondaryTextColor}; 
+            font-size: 52px; 
+            font-weight: 800; 
+            font-family: 'DejaVu Sans', Impact, 'Arial Black', sans-serif;
             text-anchor: middle;
+            stroke: #000000;
+            stroke-width: 10px;
+            paint-order: stroke fill;
+            letter-spacing: 2px;
           }
-          .shadow {
-            fill: black;
-            opacity: 0.5;
+          .badge {
+            fill: #E63946;
+            rx: 16px;
+            ry: 16px;
+            stroke: #FFFFFF;
+            stroke-width: 4px;
           }
         </style>
         
-        <!-- Shadow -->
-        <text x="642" y="302" class="primary shadow">${concept.primaryText}</text>
-        <text x="642" y="402" class="secondary shadow">${concept.secondaryText}</text>
+        <!-- Secondary text badge pill -->
+        <rect x="360" y="160" width="560" height="76" class="badge" />
+        <text x="640" y="218" class="secondary">${concept.secondaryText}</text>
         
-        <!-- Main text -->
-        <text x="640" y="300" class="primary">${concept.primaryText}</text>
-        <text x="640" y="400" class="secondary">${concept.secondaryText}</text>
+        <!-- Primary impactful text -->
+        <text x="640" y="340" class="primary">${concept.primaryText}</text>
       </svg>
     `;
     

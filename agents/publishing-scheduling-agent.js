@@ -124,11 +124,22 @@ class PublishingSchedulingAgent {
       }
       this.logger.info(`Publishing content: ${contentId}`);
       
-      let scheduleEntry = this.publishQueue.find(entry =>
-        entry.productionId === contentId || entry.id === contentId
-      );
-      if (!scheduleEntry && this.db.getLatestScheduleEntry) {
+      // Query the database directly to prevent in-memory queue desynchronization
+      let scheduleEntry = null;
+      if (this.db.getLatestScheduleEntry) {
         scheduleEntry = await this.db.getLatestScheduleEntry(contentId);
+      }
+      if (!scheduleEntry) {
+        scheduleEntry = this.publishQueue.find(entry =>
+          entry.productionId === contentId || entry.id === contentId
+        );
+      }
+      
+      // Ensure the latest repaired final video from the production bundle is used
+      if (scheduleEntry && productionBundle?.assets?.finalVideo?.path) {
+        if (!scheduleEntry.metadata) scheduleEntry.metadata = {};
+        if (!scheduleEntry.metadata.video) scheduleEntry.metadata.video = {};
+        scheduleEntry.metadata.video.path = productionBundle.assets.finalVideo.path;
       }
       
       if (!scheduleEntry) {
@@ -633,8 +644,8 @@ class PublishingSchedulingAgent {
     this.logger.info(`Emergency publish requested: ${contentId}`);
 
     if (delayMinutes > 0) {
-      const entry = this.publishQueue.find(e => e.productionId === contentId || e.id === contentId) ||
-        await this.db.getLatestScheduleEntry?.(contentId);
+      const entry = (this.db.getLatestScheduleEntry ? await this.db.getLatestScheduleEntry(contentId) : null) ||
+        this.publishQueue.find(e => e.productionId === contentId || e.id === contentId);
       if (!entry) throw new Error(`Content not found: ${contentId}`);
       const newPublishTime = new Date(Date.now() + (delayMinutes * 60 * 1000));
       entry.publishTime = newPublishTime.toISOString();

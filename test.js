@@ -3810,7 +3810,9 @@ class SystemTest {
     // Passing the CredentialManager itself leaves the engagement studio permanently
     // in fallback mode on installs with no provider environment variables.
     const savedEnv = process.env.OPENAI_API_KEY;
+    const savedGemini = process.env.GEMINI_API_KEY;
     delete process.env.OPENAI_API_KEY;
+    delete process.env.GEMINI_API_KEY;
     try {
       const configured = new AITextService({
         aiProvider: { provider: 'openai', apiKey: 'test-key', model: 'gpt-6.1-sol' }
@@ -3828,6 +3830,8 @@ class SystemTest {
     } finally {
       if (savedEnv === undefined) delete process.env.OPENAI_API_KEY;
       else process.env.OPENAI_API_KEY = savedEnv;
+      if (savedGemini === undefined) delete process.env.GEMINI_API_KEY;
+      else process.env.GEMINI_API_KEY = savedGemini;
     }
   }
 

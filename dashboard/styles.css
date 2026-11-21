@@ -686,7 +686,22 @@ label:has(input:disabled) > span { color: var(--muted); }
 .dialog form { display: grid; gap: 18px; }
 .dialog-heading { display: flex; align-items: start; justify-content: space-between; gap: 14px; }
 .dialog-heading h2 { font-size: 24px; letter-spacing: -.02em; }
-.content-dialog { width: min(1080px, calc(100vw - 30px)); max-height: calc(100vh - 30px); overflow: auto; }
+.content-dialog { width: min(1080px, calc(100vw - 30px)); max-height: calc(100vh - 30px); overflow: auto; position: relative; }
+.sticky-compliance-bar {
+  position: sticky;
+  bottom: 0;
+  background: rgba(18, 23, 32, 0.98);
+  backdrop-filter: blur(14px);
+  border-top: 1px solid var(--line-strong);
+  padding: 14px 18px;
+  margin: 20px -24px -24px -24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  z-index: 20;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.5);
+}
 
 /* ============ Toast & loading ============ */
 .toast {
