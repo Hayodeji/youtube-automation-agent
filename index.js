@@ -93,6 +93,12 @@ class YouTubeAutomationAgent {
       this.credentials = new CredentialManager();
       const credentialsValid = await this.credentials.validateAll();
       this.readiness = new ProductionReadinessService(this.db, this.credentials);
+
+      // Synchronize posting frequency from credentials configuration into settings
+      const configuredFrequency = this.credentials.credentials?.content?.postingFrequency;
+      if (configuredFrequency) {
+        await this.db.setSetting('posting_frequency', configuredFrequency, 'Posting frequency from credentials configuration');
+      }
       
       if (!credentialsValid) {
         console.log(chalk.yellow('\n⚠️  Some credentials are missing or invalid.'));
@@ -1871,16 +1877,18 @@ class YouTubeAutomationAgent {
       }
     });
 
-    server.on('error', (err) => {
-      if (err.code === 'EADDRINUSE') {
-        console.error(chalk.red(`\n❌ Port ${PORT} is already in use by another running process.`));
-        console.error(chalk.yellow(`If YouTube Automation Agent is already running, open http://${HOST}:${PORT} in your browser.`));
-        console.error(chalk.yellow(`Or choose another port: PORT=${Number(PORT) + 1} npm start\n`));
-      } else {
-        console.error(chalk.red(`\n❌ Server error: ${err.message}`));
-      }
-      process.exit(1);
-    });
+    if (server && typeof server.on === 'function') {
+      server.on('error', (err) => {
+        if (err.code === 'EADDRINUSE') {
+          console.error(chalk.red(`\n❌ Port ${PORT} is already in use by another running process.`));
+          console.error(chalk.yellow(`If YouTube Automation Agent is already running, open http://${HOST}:${PORT} in your browser.`));
+          console.error(chalk.yellow(`Or choose another port: PORT=${Number(PORT) + 1} npm start\n`));
+        } else {
+          console.error(chalk.red(`\n❌ Server error: ${err.message}`));
+        }
+        process.exit(1);
+      });
+    }
 
     this.server = server;
   }

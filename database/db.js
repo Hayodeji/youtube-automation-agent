@@ -677,6 +677,7 @@ class Database {
       ['automation_paused', 'false', 'Pause generation and publishing automation'],
       ['channel_timezone', 'America/Chicago', 'Timezone used to present channel schedules'],
       ['max_daily_posts', '1', 'Maximum posts per day'],
+      ['posting_frequency', '3-per-week', 'Content posting frequency: daily, every-2-days, 3-per-week, weekly'],
       ['content_buffer_days', '3', 'Days of content to keep in buffer'],
       ['video_provider', 'slideshow', 'Video provider: slideshow, auto, seedance, minimax_h3, google_omni, kling, or wan'],
       ['video_provider_order', 'seedance,minimax_h3,google_omni,kling,wan,slideshow', 'Provider priority used by automatic routing'],

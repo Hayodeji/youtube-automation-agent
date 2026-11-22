@@ -224,16 +224,19 @@ class AnalyticsOptimizationAgent {
       ids: 'channel==MINE',
       startDate,
       endDate,
-      metrics: 'views,impressions,impressionClickThroughRate',
+      metrics: 'views',
       dimensions: 'day',
       filters: `video==${videoId}`
     });
     
+    const rows = response.data.rows || [];
+    const totalViews = rows.reduce((sum, row) => sum + (Number(row[1]) || 0), 0);
+
     return {
-      totalViews: response.data.rows?.reduce((sum, row) => sum + row[1], 0) || 0,
-      totalImpressions: response.data.rows?.reduce((sum, row) => sum + row[2], 0) || 0,
-      averageCTR: this.calculateAverage(response.data.rows?.map(row => row[3]) || []),
-      dailyData: response.data.rows || []
+      totalViews,
+      totalImpressions: 0,
+      averageCTR: 0,
+      dailyData: rows
     };
   }
 

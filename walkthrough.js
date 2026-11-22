@@ -551,6 +551,22 @@ class SetupWalkthrough {
     };
     await this.cm.saveCredentials();
 
+    try {
+      const { Database } = require('./database/db');
+      const db = new Database();
+      await db.initialize();
+      await db.setSetting('posting_frequency', answers.postingFrequency, 'Posting frequency configured in walkthrough');
+      const currentStrategy = await db.getChannelStrategy() || {};
+      const cadenceMap = { 'daily': 7, 'every-2-days': 3, '3-per-week': 3, 'weekly': 1 };
+      await db.saveChannelStrategy({
+        ...currentStrategy,
+        cadencePerWeek: cadenceMap[answers.postingFrequency] || 3
+      });
+      await db.close();
+    } catch (_dbError) {
+      // Best-effort database synchronization
+    }
+
     console.log(chalk.green('  ✓ Saved.') + chalk.gray(' Uploads default to PRIVATE so you can review them first —'));
     console.log(chalk.gray('  set DEFAULT_PRIVACY_STATUS=public in .env when you\'re confident.'));
   }
