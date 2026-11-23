@@ -1071,6 +1071,7 @@ function renderShortsStudio(item) {
     ${clips.length ? `<div class="shorts-grid">${clips.map(clip => {
       const locked = ['scheduled', 'uploading', 'published', 'reconciliation_required'].includes(clip.status);
       const rendered = Boolean(clip.assetUrls?.video);
+      const shortPrivacy = clip.privacyStatus || 'public';
       return `<article class="short-card" data-short-card="${escapeHTML(clip.id)}">
         <div class="short-preview">${rendered
           ? `<video controls preload="metadata"><source src="${escapeHTML(clip.assetUrls.video)}" type="video/mp4"></video>`
@@ -1083,7 +1084,7 @@ function renderShortsStudio(item) {
           <div class="form-grid two">
             <label><span>Vertical layout</span><select data-short-field="layout" ${locked ? 'disabled' : ''}><option value="blur" ${clip.layout === 'blur' ? 'selected' : ''}>Blurred canvas</option><option value="crop" ${clip.layout === 'crop' ? 'selected' : ''}>Center crop</option><option value="stacked" ${clip.layout === 'stacked' ? 'selected' : ''}>Stacked focus</option></select></label>
             <label><span>Publish time</span><input data-short-field="publishTime" type="datetime-local" value="${toLocalInput(clip.publishTime)}" ${locked ? 'disabled' : ''}></label>
-            <label><span>Privacy</span><select data-short-field="privacyStatus" ${locked ? 'disabled' : ''}><option value="private" ${clip.privacyStatus === 'private' ? 'selected' : ''}>Private</option><option value="unlisted" ${clip.privacyStatus === 'unlisted' ? 'selected' : ''}>Unlisted</option><option value="public" ${clip.privacyStatus === 'public' ? 'selected' : ''}>Public</option></select></label>
+            <label><span>Privacy</span><select data-short-field="privacyStatus" ${locked ? 'disabled' : ''}><option value="public" ${shortPrivacy === 'public' ? 'selected' : ''}>Public</option><option value="unlisted" ${shortPrivacy === 'unlisted' ? 'selected' : ''}>Unlisted</option><option value="private" ${shortPrivacy === 'private' ? 'selected' : ''}>Private</option></select></label>
           </div>
           <p class="short-rationale">${escapeHTML(clip.rationale || '')}${clip.error ? `<br><span class="danger-text">${escapeHTML(clip.error)}</span>` : ''}</p>
           ${clip.youtubeUrl ? `<a class="source-link" href="${escapeHTML(clip.youtubeUrl)}" target="_blank" rel="noopener">Open published Short ↗</a>` : ''}
@@ -1107,6 +1108,7 @@ async function openContent(productionId) {
     const experiment = data.packagingExperiment;
     const selectedTitleVariant = Number(data.selectedTitleVariant || 0);
     const selectedThumbnailVariant = Number(data.selectedThumbnailVariant || 0);
+    const privacyStatus = data.privacyStatus || item.schedule?.privacy_status || 'public';
     $('#content-detail').innerHTML = `
       <div class="dialog-heading"><div><p class="eyebrow">CONTENT REVIEW</p><h2>${escapeHTML(title)}</h2><div class="meta-line">${statusChip(item.schedule?.status || item.review_status || item.status)} · Quality ${qualityScore(item.qualityChecks)}%</div></div><button type="button" class="close-button" data-close>×</button></div>
       <form id="content-review-form" class="editor content-review-editor">
@@ -1133,7 +1135,7 @@ async function openContent(productionId) {
         ${renderProvenanceEditor(item.provenance, canReview)}
           <div class="form-grid two">
             <label><span>Publish time</span><input name="publishTime" type="datetime-local" value="${toLocalInput(publishTime)}"></label>
-            <label><span>Privacy</span><select name="privacyStatus"><option value="private" ${data.privacyStatus === 'private' ? 'selected' : ''}>Private</option><option value="unlisted" ${data.privacyStatus === 'unlisted' ? 'selected' : ''}>Unlisted</option><option value="public" ${data.privacyStatus === 'public' ? 'selected' : ''}>Public</option></select></label>
+            <label><span>Privacy</span><select name="privacyStatus"><option value="public" ${privacyStatus === 'public' ? 'selected' : ''}>Public</option><option value="unlisted" ${privacyStatus === 'unlisted' ? 'selected' : ''}>Unlisted</option><option value="private" ${privacyStatus === 'private' ? 'selected' : ''}>Private</option></select></label>
           </div>
           <div class="sticky-compliance-bar">
             <div class="settings-row" style="margin: 0; display: flex; gap: 16px;">

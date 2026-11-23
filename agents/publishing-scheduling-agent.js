@@ -77,7 +77,7 @@ class PublishingSchedulingAgent {
           video: productionData.assets.finalVideo,
           audio: productionData.assets.audio,
           captions: productionData.assets.captions,
-          privacyStatus: productionData.privacyStatus || process.env.DEFAULT_PRIVACY_STATUS || 'private',
+          privacyStatus: productionData.privacyStatus || process.env.DEFAULT_PRIVACY_STATUS || 'public',
           containsSyntheticMedia: productionData.containsSyntheticMedia === true,
           contentType: productionData.contentType || 'long_form',
           sourceProductionId: productionData.sourceProductionId || productionData.id,
@@ -216,7 +216,7 @@ class PublishingSchedulingAgent {
     const safeMetadata = validation.value;
     
     // Prepare video metadata
-    const requestedPrivacy = metadata.privacyStatus || process.env.DEFAULT_PRIVACY_STATUS || 'private';
+    const requestedPrivacy = metadata.privacyStatus || process.env.DEFAULT_PRIVACY_STATUS || 'public';
     const scheduledFor = new Date(scheduleEntry.publishTime);
     const futureSchedule = !options.publishNow && Number.isFinite(scheduledFor.getTime()) && scheduledFor.getTime() > Date.now() + 60000;
     const videoMetadata = {
@@ -346,7 +346,11 @@ class PublishingSchedulingAgent {
       
       this.logger.info(`Thumbnail uploaded for video: ${videoId}`);
     } catch (error) {
-      this.logger.error(`Failed to upload thumbnail: ${error.message}`);
+      if (error.message && error.message.includes("permissions to upload and set custom video thumbnails")) {
+        this.logger.warn(`Custom thumbnail rejected by YouTube: Channel requires one-time phone verification at https://www.youtube.com/verify to enable Intermediate Features (custom thumbnails).`);
+      } else {
+        this.logger.error(`Failed to upload thumbnail: ${error.message}`);
+      }
     }
   }
 

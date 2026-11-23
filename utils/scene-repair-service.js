@@ -570,7 +570,12 @@ class SceneRepairService {
     const allIntentionalSilence = scenes.every(scene => scene.narrationStatus === 'intentional_silence');
     await this.videoGenerator.addAudioToVideo(visualPath, audioPath, finalPath, { allowSilent: allIntentionalSilence });
     await fs.unlink(visualPath).catch(() => {});
-    await fs.writeFile(captionsPath, this.buildSRT(scenes));
+    if (options.captionsPath && await this.pathExists(options.captionsPath)) {
+      const precisionSrt = await fs.readFile(options.captionsPath, 'utf8');
+      await fs.writeFile(captionsPath, precisionSrt);
+    } else {
+      await fs.writeFile(captionsPath, this.buildSRT(scenes, productionId));
+    }
 
     // Native burned-in subtitles support
     let outputVideoPath = finalPath;
@@ -669,7 +674,7 @@ class SceneRepairService {
     return outputPath;
   }
 
-  buildSRT(scenes) {
+  buildSRT(scenes, productionId = null) {
     const time = seconds => {
       const ms = Math.max(0, Math.round(seconds * 1000));
       const hours = Math.floor(ms / 3600000);
@@ -681,17 +686,78 @@ class SceneRepairService {
     let cursor = 0;
     let index = 1;
     const blocks = [];
-    for (const scene of scenes) {
-      const words = scene.scriptText.trim().split(/\s+/).filter(Boolean);
-      const groups = [];
-      for (let offset = 0; offset < words.length; offset += 8) groups.push(words.slice(offset, offset + 8).join(' '));
+    for (let sceneIdx = 0; sceneIdx < scenes.length; sceneIdx++) {
+      const scene = scenes[sceneIdx];
       const duration = Number(scene.duration);
-      const perGroup = groups.length ? duration / groups.length : duration;
-      for (const group of groups) {
-        blocks.push(`${index++}\n${time(cursor)} --> ${time(cursor + perGroup)}\n${group}`);
-        cursor += perGroup;
+
+      // Check for alignment JSON from high-precision TTS
+      let alignment = null;
+      if (productionId) {
+        const alignPath = path.join(this.dataRoot, 'audio', 'scenes', productionId, `scene_${sceneIdx}_alignment.json`);
+        try {
+          if (require('fs').existsSync(alignPath)) {
+            alignment = JSON.parse(require('fs').readFileSync(alignPath, 'utf8'));
+          }
+        } catch (_) {}
       }
-      if (!groups.length) cursor += duration;
+
+      if (alignment && alignment.characters && alignment.character_start_times_seconds) {
+        const chars = alignment.characters;
+        const starts = alignment.character_start_times_seconds;
+        const ends = alignment.character_end_times_seconds;
+        const words = [];
+        let currentWord = '';
+        let wordStart = null;
+        let wordEnd = null;
+
+        for (let i = 0; i < chars.length; i++) {
+          const c = chars[i];
+          if (/\S/.test(c)) {
+            if (wordStart === null) wordStart = starts[i];
+            wordEnd = ends[i];
+            currentWord += c;
+          } else if (currentWord) {
+            words.push({ word: currentWord, start: wordStart, end: wordEnd });
+            currentWord = '';
+            wordStart = null;
+            wordEnd = null;
+          }
+        }
+        if (currentWord) words.push({ word: currentWord, start: wordStart, end: wordEnd });
+
+        // Group into natural phrases
+        let currentGroup = [];
+        let currentLength = 0;
+        for (let i = 0; i < words.length; i++) {
+          const w = words[i];
+          const endsWithPunct = /[.!?:;—,]$/.test(w.word);
+          currentGroup.push(w);
+          currentLength += w.word.length + 1;
+          const shouldSplit = (endsWithPunct && currentGroup.length >= 2) ||
+                              (currentLength >= 28) ||
+                              (currentGroup.length >= 5) ||
+                              (i === words.length - 1);
+          if (shouldSplit && currentGroup.length > 0) {
+            const phrase = currentGroup.map(item => item.word).join(' ');
+            const startSec = cursor + currentGroup[0].start;
+            const endSec = cursor + currentGroup[currentGroup.length - 1].end;
+            blocks.push(`${index++}\n${time(startSec)} --> ${time(Math.max(endSec, startSec + 0.5))}\n${phrase}`);
+            currentGroup = [];
+            currentLength = 0;
+          }
+        }
+        cursor += duration;
+      } else {
+        const words = scene.scriptText.trim().split(/\s+/).filter(Boolean);
+        const groups = [];
+        for (let offset = 0; offset < words.length; offset += 8) groups.push(words.slice(offset, offset + 8).join(' '));
+        const perGroup = groups.length ? duration / groups.length : duration;
+        for (const group of groups) {
+          blocks.push(`${index++}\n${time(cursor)} --> ${time(cursor + perGroup)}\n${group}`);
+          cursor += perGroup;
+        }
+        if (!groups.length) cursor += duration;
+      }
     }
     return blocks.join('\n\n') + (blocks.length ? '\n' : '');
   }

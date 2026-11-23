@@ -1790,7 +1790,7 @@ class YouTubeAutomationAgent {
       scheduledPublishTime: editorData.publishTime || input.publishTime || bundle.scheduled_publish_time,
       priority: bundle.priority,
       estimatedDuration: bundle.estimated_duration,
-      privacyStatus: editorData.privacyStatus || process.env.DEFAULT_PRIVACY_STATUS || 'private',
+      privacyStatus: editorData.privacyStatus || process.env.DEFAULT_PRIVACY_STATUS || 'public',
       provenance: bundle.provenance,
       containsSyntheticMedia: bundle.provenance?.containsSyntheticMedia === true,
       scenes: bundle.scenes || []
@@ -1822,7 +1822,7 @@ class YouTubeAutomationAgent {
         video: productionData.assets.finalVideo,
         audio: productionData.assets.audio,
         captions: productionData.assets.captions,
-        privacyStatus: editorData.privacyStatus || process.env.DEFAULT_PRIVACY_STATUS || 'private',
+        privacyStatus: editorData.privacyStatus || process.env.DEFAULT_PRIVACY_STATUS || 'public',
         containsSyntheticMedia: productionData.containsSyntheticMedia
       };
       await this.db.updateScheduleEntry(scheduleEntry);
