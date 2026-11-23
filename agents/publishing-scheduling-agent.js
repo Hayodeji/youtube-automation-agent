@@ -260,9 +260,12 @@ class PublishingSchedulingAgent {
       await this.uploadThumbnail(videoId, metadata.thumbnail.path);
     }
     
-    // Upload captions
-    if (metadata.captions && metadata.captions.path) {
+    // Upload captions only if subtitles are NOT already burned into the video
+    const subtitlesAlreadyBurned = metadata.video?.subtitlesBurned === true || metadata.subtitlesBurned === true;
+    if (!subtitlesAlreadyBurned && metadata.captions && metadata.captions.path) {
       await this.uploadCaptions(videoId, metadata.captions.path);
+    } else if (subtitlesAlreadyBurned) {
+      this.logger.info(`Skipping caption file upload for video ${videoId} because subtitles are already burned into the video`);
     }
     
     return videoUpload.data;
