@@ -2,9 +2,11 @@ const OpenAI = require('openai');
 const { Logger } = require('./logger');
 
 const GEMINI_MODELS = [
+  'gemini-flash-lite-latest',
+  'gemini-3.5-flash-lite',
+  'gemini-3.1-flash-lite',
   'gemini-3.8-flash',
   'gemini-4-argon',
-  'gemini-3.5-flash-lite',
 ];
 const GEMINI_DEFAULT_MODEL = GEMINI_MODELS[0];
 // Floor for the single retry after a thinking model exhausts a small budget.
@@ -124,32 +126,45 @@ class AITextService {
     const temperature = options.temperature ?? 0.7;
 
     if (this.gemini) {
-      const config = { maxOutputTokens: maxTokens };
-      if (!/^gemini-(?:3\.(?:[5-9]|\d{2,})|[4-9]|\d{2,})[.-]/.test(model)) config.temperature = temperature;
-      let response = await this.gemini.models.generateContent({
-        model,
-        contents: prompt,
-        config,
-      });
-      let text = response && response.text;
+      const candidateModels = [model, ...GEMINI_MODELS.filter(m => m !== model)];
+      let lastErr = null;
 
-      // Thinking models (gemini-3.x flash/pro) count thoughts against
-      // maxOutputTokens, so a small budget can be spent before any text is
-      // written. Retry once with room for the thoughts plus the answer.
-      if (!this._hasText(text) && this._geminiFinishReason(response) === 'MAX_TOKENS') {
-        const retryTokens = Math.max(maxTokens * 4, GEMINI_THINKING_RETRY_MIN_TOKENS);
-        response = await this.gemini.models.generateContent({
-          model,
-          contents: prompt,
-          config: { ...config, maxOutputTokens: retryTokens },
-        });
-        text = response && response.text;
-      }
+      for (const m of candidateModels) {
+        try {
+          const config = { maxOutputTokens: maxTokens };
+          if (!/^gemini-(?:3\.(?:[5-9]|\d{2,})|[4-9]|\d{2,})[.-]/.test(m)) config.temperature = temperature;
+          let response = await this.gemini.models.generateContent({
+            model: m,
+            contents: prompt,
+            config,
+          });
+          let text = response && response.text;
 
-      if (!this._hasText(text)) {
-        throw new Error(this._geminiEmptyResponseMessage(response));
+          // Thinking models (gemini-3.x flash/pro) count thoughts against
+          // maxOutputTokens, so a small budget can be spent before any text is
+          // written. Retry once with room for the thoughts plus the answer.
+          if (!this._hasText(text) && this._geminiFinishReason(response) === 'MAX_TOKENS') {
+            const retryTokens = Math.max(maxTokens * 4, GEMINI_THINKING_RETRY_MIN_TOKENS);
+            response = await this.gemini.models.generateContent({
+              model: m,
+              contents: prompt,
+              config: { ...config, maxOutputTokens: retryTokens },
+            });
+            text = response && response.text;
+          }
+
+          if (!this._hasText(text)) {
+            throw new Error(this._geminiEmptyResponseMessage(response));
+          }
+          return text;
+        } catch (err) {
+          lastErr = err;
+          const isCapacity = err.status === 503 || err.status === 429 || /high demand|UNAVAILABLE|RESOURCE_EXHAUSTED/i.test(err.message || '');
+          if (!isCapacity) throw err;
+          this.logger.warn(`Gemini model ${m} unavailable (${err.status || 503}); trying next model...`);
+        }
       }
-      return text;
+      throw lastErr || new Error('All Gemini candidate models failed');
     }
 
     if (!this.client) {
