@@ -1,0 +1,29 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: TopBadge,Arial,42,&H00FFFFFF,&H000000FF,&H00000000,&H85000000,-1,0,0,0,100,100,0,0,3,14,0,8,40,40,260,1
+Style: MainDialogue,Arial,52,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,5,2,2,60,60,460,1
+Style: LowerLeftCTA,Arial,42,&H0000FFFF,&H000000FF,&H00000000,&HA0000000,-1,0,0,0,100,100,0,0,3,14,0,1,80,60,340,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:09.19,TopBadge,,0,0,0,,1 MILLION PEOPLE. NO PUMPS?!
+Dialogue: 0,0:00:09.19,0:00:18.00,TopBadge,,0,0,0,,CONQUERING GRAVITY WITH STONE
+Dialogue: 0,0:00:18.00,0:00:27.39,TopBadge,,0,0,0,,DROPPING 1 INCH EVERY 100 YARDS!
+Dialogue: 0,0:00:27.39,0:00:35.89,TopBadge,,0,0,0,,STILL WORKING AFTER 2,000 YEARS!
+Dialogue: 1,0:00:00.00,0:00:03.20,MainDialogue,,0,0,0,,IMAGINE LIVING IN AN ANCIENT METROPOLIS
+Dialogue: 1,0:00:03.20,0:00:05.50,MainDialogue,,0,0,0,,OF OVER ONE MILLION PEOPLE
+Dialogue: 1,0:00:05.50,0:00:09.19,MainDialogue,,0,0,0,,BEFORE ELECTRICITY OR MODERN PUMPS!
+Dialogue: 1,0:00:09.19,0:00:13.00,MainDialogue,,0,0,0,,THEN CAME THE MASTERPIECE OF PHYSICS:
+Dialogue: 1,0:00:13.00,0:00:18.00,MainDialogue,,0,0,0,,THE MONUMENTAL ROMAN AQUEDUCT!
+Dialogue: 1,0:00:18.00,0:00:21.19,MainDialogue,,0,0,0,,USING NOTHING BUT PURE GRAVITY
+Dialogue: 1,0:00:21.19,0:00:24.80,MainDialogue,,0,0,0,,DROPPING LESS THAN AN INCH EVERY 100 YARDS
+Dialogue: 1,0:00:24.80,0:00:27.39,MainDialogue,,0,0,0,,WATER FLOWED CONTINUOUSLY ACROSS MOUNTAINS!
+Dialogue: 1,0:00:27.39,0:00:31.59,MainDialogue,,0,0,0,,SOME ARE STILL DELIVERING FRESH WATER
+Dialogue: 1,0:00:31.59,0:00:35.89,MainDialogue,,0,0,0,,TO PUBLIC FOUNTAINS 2,000 YEARS LATER!
+Dialogue: 2,0:00:29.89,0:00:35.89,LowerLeftCTA,,0,0,0,,👇 TAP RELATED VIDEO FOR FULL STORY

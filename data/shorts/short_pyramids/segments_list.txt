@@ -1,0 +1,4 @@
+file '/home/w3irdsoul/Desktop/project/youtube-automation-agent/data/shorts/short_pyramids/beat_0_video.mp4'
+file '/home/w3irdsoul/Desktop/project/youtube-automation-agent/data/shorts/short_pyramids/beat_1_video.mp4'
+file '/home/w3irdsoul/Desktop/project/youtube-automation-agent/data/shorts/short_pyramids/beat_2_video.mp4'
+file '/home/w3irdsoul/Desktop/project/youtube-automation-agent/data/shorts/short_pyramids/beat_3_video.mp4'

@@ -1,0 +1,46 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: TopBadge,Arial,42,&H00FFFFFF,&H000000FF,&H00000000,&H85000000,-1,0,0,0,100,100,0,0,3,14,0,8,40,40,260,1
+Style: MainDialogue,Arial,54,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,5,2,2,60,60,460,1
+Style: LowerLeftCTA,Arial,42,&H0000FFFF,&H000000FF,&H00000000,&HA0000000,-1,0,0,0,100,100,0,0,3,14,0,1,80,60,340,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:08.84,TopBadge,,0,0,0,,0.05° ACCURACY. NO COMPASS?!
+Dialogue: 0,0:00:08.84,0:00:16.30,TopBadge,,0,0,0,,NO NORTH STAR IN 2500 BC!
+Dialogue: 0,0:00:16.30,0:00:28.39,TopBadge,,0,0,0,,2 STARS + 1 STRING = TRUE NORTH
+Dialogue: 0,0:00:28.39,0:00:35.19,TopBadge,,0,0,0,,THE WATER SECRET
+Dialogue: 1,0:00:00.00,0:00:01.47,MainDialogue,,0,0,0,,IMAGINE BUILDING A GIANT
+Dialogue: 1,0:00:01.47,0:00:03.50,MainDialogue,,0,0,0,,480-FOOT STONE MOUNTAIN,
+Dialogue: 1,0:00:03.71,0:00:04.67,MainDialogue,,0,0,0,,AND LINING IT UP
+Dialogue: 1,0:00:04.67,0:00:05.94,MainDialogue,,0,0,0,,WITH TRUE NORTH ALMOST
+Dialogue: 1,0:00:05.94,0:00:07.65,MainDialogue,,0,0,0,,PERFECTLY—OFF BY JUST
+Dialogue: 1,0:00:07.65,0:00:08.33,MainDialogue,,0,0,0,,A FRACTION OF A
+Dialogue: 1,0:00:08.33,0:00:08.80,MainDialogue,,0,0,0,,HAIR!
+Dialogue: 1,0:00:08.92,0:00:09.90,MainDialogue,,0,0,0,,WELL, HERE'S THE PLOT
+Dialogue: 1,0:00:09.90,0:00:12.52,MainDialogue,,0,0,0,,TWIST: IN 2500 BC,
+Dialogue: 1,0:00:12.67,0:00:13.73,MainDialogue,,0,0,0,,OUR NORTH STAR,
+Dialogue: 1,0:00:13.73,0:00:15.42,MainDialogue,,0,0,0,,POLARIS, WASN'T ANYWHERE
+Dialogue: 1,0:00:15.42,0:00:16.23,MainDialogue,,0,0,0,,NEAR NORTH!
+Dialogue: 1,0:00:16.30,0:00:17.74,MainDialogue,,0,0,0,,WHENEVER THOSE TWO STARS
+Dialogue: 1,0:00:17.74,0:00:18.73,MainDialogue,,0,0,0,,LINED UP VERTICALLY
+Dialogue: 1,0:00:18.73,0:00:19.69,MainDialogue,,0,0,0,,IN THE NIGHT SKY,
+Dialogue: 1,0:00:19.86,0:00:21.23,MainDialogue,,0,0,0,,THE IMAGINARY LINE BETWEEN
+Dialogue: 1,0:00:21.23,0:00:22.37,MainDialogue,,0,0,0,,THEM CUT STRAIGHT THROUGH
+Dialogue: 1,0:00:22.37,0:00:23.14,MainDialogue,,0,0,0,,TRUE NORTH!
+Dialogue: 1,0:00:23.75,0:00:24.90,MainDialogue,,0,0,0,,AN EGYPTIAN SURVEYOR
+Dialogue: 1,0:00:24.90,0:00:25.77,MainDialogue,,0,0,0,,HELD UP A SIMPLE
+Dialogue: 1,0:00:25.77,0:00:26.84,MainDialogue,,0,0,0,,WOODEN VIEWING SLOT
+Dialogue: 1,0:00:26.84,0:00:27.89,MainDialogue,,0,0,0,,CALLED A MERKHET,
+Dialogue: 1,0:00:28.22,0:00:28.67,MainDialogue,,0,0,0,,AND
+Dialogue: 1,0:00:28.39,0:00:29.15,MainDialogue,,0,0,0,,AND HOW DID THEY
+Dialogue: 1,0:00:29.15,0:00:30.51,MainDialogue,,0,0,0,,KEEP THE PYRAMID'S MASSIVE
+Dialogue: 1,0:00:30.51,0:00:32.69,MainDialogue,,0,0,0,,13-ACRE FOUNDATION COMPLETELY
+Dialogue: 1,0:00:32.69,0:00:35.14,MainDialogue,,0,0,0,,FLAT? NO LASERS NEEDED!
+Dialogue: 2,0:00:29.19,0:00:35.19,LowerLeftCTA,,0,0,0,,👇 TAP RELATED VIDEO FOR FULL STORY
